@@ -1,11 +1,13 @@
 package com.clipandbooks.sample.sampledualsim;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -55,8 +57,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         TelephonyManager clsTM = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         StringBuilder resultString = new StringBuilder();
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
-            // API 22 이상인 경우에 동작한다.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ) { //Build.VERSION_CODES.LOLLIPOP_MR1
+            // API 22 부터 SubscriptionManager를 지원하나 부가 API 사용을 위해서 24으로 기준잡음
             SubscriptionManager clsSM = SubscriptionManager.from(mContext);
             List<SubscriptionInfo> clsList = clsSM.getActiveSubscriptionInfoList();
 
@@ -68,14 +70,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     String strNumber = clsInfo.getNumber();
                     if( strNumber != null && strNumber.isEmpty() == false )
                     {
-                        resultString.append("CTN").append(index).append(":").append(correctionPhoneNumber(strNumber)).append("\n");
+                        resultString.append("-<").append(index).append(">----------\n");
+                        resultString.append(" - CTN:").append(":").append(correctionPhoneNumber(strNumber))
+                                .append(" - CardId:").append(clsInfo.getCardId()).append("\n")  // API 29
+                                .append(" - IccId:").append(clsInfo.getIccId()).append("\n")
+                                .append(" - CarrierId:").append(clsInfo.getCarrierId()).append("\n")
+                                .append(" - CarrierName:").append(clsInfo.getCarrierName()).append("\n")
+                                .append(" - DisplayName:").append(clsInfo.getDisplayName()).append("\n")
+                                .append(" - SubScriptionId:").append(clsInfo.getSubscriptionId()).append("\n")
+                                .append(" - SubScriptionType:").append(clsInfo.getSubscriptionType()).append("\n");
+
                     }
                     index++;
                 }
                 index = 0;
-                mResult.setText(resultString.toString());
+
                 Log.d("TAG", "resultString" + resultString);
                 Log.d("TAG", "resultString.toString()" + resultString);
+
+                resultString.append("---------\n");
+
+                int defDataSubScriptionId;
+                int defSmsSubScriptionId;
+                int defVoiceSubScriptionId;
+                int defSubscriptionId;
+
+                // API 24 이상 부터
+                defSubscriptionId = SubscriptionManager.getDefaultSubscriptionId();
+                defDataSubScriptionId = SubscriptionManager.getDefaultDataSubscriptionId();
+                defSmsSubScriptionId = SubscriptionManager.getDefaultSmsSubscriptionId();
+                defVoiceSubScriptionId = SubscriptionManager.getDefaultVoiceSubscriptionId();
+
+                resultString.append("- def SubScriptionId :").append(defSubscriptionId).append("\n");
+                resultString.append("- def Data SubScriptionId :").append(defDataSubScriptionId).append("\n");
+                resultString.append("- def SMS SubScriptionId :").append(defSmsSubScriptionId).append("\n");
+                resultString.append("- def Voice SubScriptionId :").append(defVoiceSubScriptionId).append("\n");
+
+
+                mResult.setText(resultString.toString());
             } else {
                 mResult.setText("CTN:"+ clsTM.getLine1Number());
             }
